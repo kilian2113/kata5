@@ -7,26 +7,33 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import software.ulpgc.kata5.model.Movie;
-import software.ulpgc.kata5.task.HistogramBuilder;
-import software.ulpgc.kata5.viewmodel.Histogram;
+import software.ulpgc.kata5.architecture.io.Store;
+import software.ulpgc.kata5.architecture.model.Movie;
+import software.ulpgc.kata5.architecture.task.HistogramBuilder;
+import software.ulpgc.kata5.architecture.viewmodel.Histogram;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.stream.Stream;
 
-public class Main extends JFrame {
-    public Main() {
+public class Desktop extends JFrame {
+    private final Store store;
+
+    private Desktop(Store store) {
+        this.store = store;
         this.setLocationRelativeTo(null);
         this.setTitle("Histogram display");
         this.setSize(800, 600);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    public static void main(String[] args) {
-        Main main = new Main();
-        main.display(histogramOf(movies()));
-        main.setVisible(true);
+    public static Desktop with(Store store) {
+        return new Desktop(store);
+    }
+
+    public Desktop display() {
+        display(histogramOf(movies()));
+        return this;
     }
 
     private void display(Histogram histogram) {
@@ -78,7 +85,7 @@ public class Main extends JFrame {
         return series;
     }
 
-    private static Histogram histogramOf(Stream<Movie> movies) {
+    private Histogram histogramOf(Stream<Movie> movies) {
         return HistogramBuilder.with(movies)
                 .title("Películas por año")
                 .x("Año")
@@ -86,9 +93,8 @@ public class Main extends JFrame {
                 .build(Movie::year);
     }
 
-    private static Stream<Movie> movies() {
-        return new RemoteMovieLoader(MovieDeserializer::fromTsv)
-                .loadAll()
+    private Stream<Movie> movies() {
+        return store.movies()
                 .filter(m->m.year()>=1900)
                 .filter(m->m.year()<=2025);
     }
